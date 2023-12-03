@@ -58,6 +58,14 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>com.heroku.sdk</groupId>
+				<artifactId>heroku-maven-plugin</artifactId>
+				<version>3.0.3</version>
+				<configuration>
+					<appName>tres-en-linea</appName>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
