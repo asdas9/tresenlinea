@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tres en Línea</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        .tablero td {
+            width: 100px;
+            height: 100px;
+            border: 1px solid black;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="text-center">Tres en Línea</h1>
+    <div class="row justify-content-center mt-4">
+        <table class="tablero">
+            <tr th:each="fila, filaStat : ${tablero}">
+                <td th:each="celda, celdaStat : ${fila}"
+                    th:id="${'cell' + filaStat.index + celdaStat.index}"
+                    th:text="${celda == 'VACIO' ? '' : celda}"></td>
+            </tr>
+        </table>
+    </div>
+    <!-- Botón para iniciar/reiniciar el juego -->
+    <div class="text-center mt-4">
+        <a href="/juego/iniciar" class="btn btn-primary">Iniciar/Reiniciar Juego</a>
+    </div>
+</div>
+
+<!-- Agrega este código en el body de tu HTML -->
+<div class="modal fade" id="ganadorModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">¡Tenemos un ganador!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="ganadorMensaje"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Opcional: jQuery y Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script>
+    function realizarMovimiento(fila, columna) {
+        fetch('/juego/mover', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({fila: fila, columna: columna}),
+        })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Respuesta no válida:', response);
+                    throw new Error('Respuesta no válida');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Respuesta del servidor:', data);
+                updateTablero(data);
+
+                // Verifica si el mensaje es un ganador o empate y muestra el modal con el mensaje
+                if (data.mensaje) {
+                    document.getElementById('ganadorMensaje').textContent = data.mensaje;
+                    $('#ganadorModal').modal('show');
+                }
+            })
+            .catch((error) => {
+                console.error('Error en la solicitud:', error);
+            });
+    }
+
+
+    function updateTablero(data) {
+        for (let i = 0; i < data.length; i++) {
+            for (let j = 0; j < data[i].length; j++) {
+                const cellId = 'cell' + i + j; // Asegúrate de que esta concatenación coincide con los IDs de las celdas en el HTML
+                const cell = document.getElementById(cellId);
+                const valorCelda = data[i][j] === 'VACIO' ? '' : data[i][j];
+                cell.textContent = valorCelda;
+            }
+        }
+    }
+
+
+    document.querySelectorAll('.tablero td').forEach(cell => {
+        cell.addEventListener('click', (e) => {
+            const clickedCell = e.target;
+            const cellId = clickedCell.id;
+            const fila = parseInt(cellId.substring(4, 5)); // Obtiene el índice de la fila
+            const columna = parseInt(cellId.substring(5, 6)); // Obtiene el índice de la columna
+            realizarMovimiento(fila, columna);
+        });
+    });
+</script>
+</body>
+</html>
